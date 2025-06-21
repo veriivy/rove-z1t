@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 
-AIRLINES_WHITELIST = {"AC", "UA", "DL","AA"}
+AIRLINES_WHITELIST = {"UA", "DL","AA"}
 
 def get_data(dep_date,ret_date):
 	url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
