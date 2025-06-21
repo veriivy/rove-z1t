@@ -35,12 +35,11 @@ def get_data(dep_date, ret_date):
         "x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"
     }
 
-    response = requests.get(url, headers=headers, params=querystring)
-    return response.json()
-
-start_date = datetime(2025, 6, 21).date()
-end_date = datetime(2025, 6, 25).date()
-trip_length = 4
+	response = requests.get(url, headers=headers, params=querystring)
+	return response.json()
+start_date = datetime(2025, 5, 21).date()
+end_date = datetime(2025, 6, 21).date()
+trip_length = 4  # days between departure and return
 current_date = start_date
 
 while current_date <= end_date:
