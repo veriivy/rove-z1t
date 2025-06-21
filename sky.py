@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS flights (
 """)
 conn.commit()
 
+cursor.execute("DELETE FROM flights")
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='flights'")
+conn.commit()
+
 def get_data(dep_date, ret_date):
     url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
     querystring = {
@@ -35,8 +39,9 @@ def get_data(dep_date, ret_date):
         "x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"
     }
 
-	response = requests.get(url, headers=headers, params=querystring)
-	return response.json()
+    response = requests.get(url, headers=headers, params=querystring)
+    return response.json()
+
 start_date = datetime(2025, 5, 21).date()
 end_date = datetime(2025, 6, 21).date()
 trip_length = 4  # days between departure and return
