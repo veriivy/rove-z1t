@@ -1,11 +1,12 @@
-import requests
+import http.client
 
-url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
+conn = http.client.HTTPSConnection("priceline-com-provider.p.rapidapi.com")
 
-querystring = {"sid":"iSiX639","origin_airport_code":"YWG,JFK","adults":"1","departure_date":"2021-12-21,2021-12-25","destination_airport_code":"JFK,YWG"}
+headers = { 'x-rapidapi-host': "priceline-com-provider.p.rapidapi.com" }
 
-headers = {"x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"}
+conn.request("GET", "/v2/flight/roundTrip?sid=iSiX639&origin_airport_code=YWG%2CJFK&adults=1&departure_date=2021-12-21%2C2021-12-25&destination_airport_code=JFK%2CYWG", headers=headers)
 
-response = requests.get(url, headers=headers, params=querystring)
+res = conn.getresponse()
+data = res.read()
 
-print(response.json())
+print(data.decode("utf-8"))
