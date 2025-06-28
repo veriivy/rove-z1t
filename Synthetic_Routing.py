@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 #set-up
 Origin = "MIA"
 Destination = "JFK"
-Hubs = ["ATL", "CLT", "ORD", "DFW", "BOS", "PHL"]
-Airline_Whitelist = {"F9"}
+Hubs = ["ATL", "ORD", "DFW", "BOS", "PHL"]
+Airline_Whitelist = {"AA"}
 min_layover = timedelta(minutes=75)
 
 Departure_Date = "2025-07-23"
