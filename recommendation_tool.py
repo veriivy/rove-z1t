@@ -11,8 +11,6 @@ def create_route_object(route_type, carrier, price, miles, class_code="Y"):
         vpm = value_per_mile_giftCards(carrier)
     elif route_type == "hotel":
         vpm = value_per_mile_hotels(carrier)
-    else:
-        raise ValueError("Invalid route type")
     return {
         "type": route_type,
         "airline": carrier,
@@ -92,8 +90,7 @@ def display_recommendations(routes, priority):
               f"Price: ${route['price']} | Distance: {route['total_distance']} mi | "
               f"VPM: {route['vpm']}¢/mile")
 
-if __name__ == "__main__":
-    priority = "value_per_mile"
-    all_routes = gather_all_routes()
-    top_choices = recommend_routes(all_routes, priority)
-    display_recommendations(top_choices, priority)
+priority = "value_per_mile"
+all_routes = gather_all_routes()
+top_choices = recommend_routes(all_routes, priority)
+display_recommendations(top_choices, priority)
