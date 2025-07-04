@@ -1,8 +1,8 @@
-from synthetic_routing import (
+from Synthetic_Routing import (
     get_roundtrip, one_way, get_oneway_options,
     valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs
 )
-from value_per_mile_file import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
+from value_per_mile import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
 
 def create_route_object(route_type, carrier, price, miles, class_code="Y"):
     if route_type == "flight":
@@ -71,17 +71,7 @@ def gather_all_routes():
         flight_routes.append(create_route_object("flight", best_in["leg1"]["airline"], best_in["leg1"]["price"], 1100))
         flight_routes.append(create_route_object("flight", best_in["leg2"]["airline"], best_in["leg2"]["price"], 1100))
 
-    gift_card_routes = [
-        create_route_object("gift_card", "DL", 100, 300),
-        create_route_object("gift_card", "UA", 120, 300)
-    ]
-
-    hotel_routes = [
-        create_route_object("hotel", "AA", 90, 300),
-        create_route_object("hotel", "DL", 160, 400)
-    ]
-
-    return flight_routes + gift_card_routes + hotel_routes
+    return flight_routes
 
 def display_recommendations(routes, priority):
     print(f"\nTop 3 redemption options by '{priority}':\n")
