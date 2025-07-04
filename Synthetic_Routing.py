@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 #set-up
 Origin = "MIA"
 Destination = "JFK"
-Hubs = ["ATL", "ORD", "DFW", "BOS", "PHL"]
-Airline_Whitelist = {"AA"}
+Hubs = ["ATL", "CLT", "ORD", "DFW", "BOS", "PHL"]
+Airline_Whitelist = {"F9"}
 min_layover = timedelta(minutes=75)
 
 Departure_Date = "2025-07-23"
@@ -198,4 +198,3 @@ else:
     print(f"Through hub: {best_in['hub']} | Total: ${best_in['price']}")
     print_leg_details(f"Leg 1 ({Destination} → {best_in['hub']})", best_in["leg1"])
     print_leg_details(f"Leg 2 ({best_in['hub']} → {Origin})", best_in["leg2"])
-
