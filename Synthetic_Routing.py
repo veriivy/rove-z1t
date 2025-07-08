@@ -2,10 +2,10 @@ import requests
 from datetime import datetime, timedelta
 
 #set-up
-Origin = "MIA"
+Origin = "IST"
 Destination = "JFK"
-Hubs = ["ATL", "CLT", "ORD", "DFW", "BOS", "PHL"]
-Airline_Whitelist = {"F9"}
+Hubs = ["ATL","ORD","DFW"]
+Airline_Whitelist = {"TK"}
 min_layover = timedelta(minutes=75)
 
 Departure_Date = "2025-07-23"
@@ -18,18 +18,19 @@ Headers = {
 #direct one-way flight
 def one_way(origin, destination, date):
     url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
-    params = {"departure_date":date,
-              "sid":"iSiX639",
-              "origin_airport_code":origin,
-              "destination_airport_code":destination,
-              "adults":"1"}
+    params = {
+        "departure_date": date,
+        "sid": "iSiX639",
+        "origin_airport_code": origin,
+        "destination_airport_code": destination,
+        "adults": "1",
+        "number_of_itineraries": "10"
+    }
     res = requests.get(url, headers=Headers, params=params).json()
     itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
     direct = []
     for itin in itineraries.values():
             airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-            if airline not in Airline_Whitelist:
-                continue
 
             details = itin["slice_data"]["slice_0"]
             dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
@@ -46,18 +47,19 @@ def one_way(origin, destination, date):
 #all possible one-way flights
 def get_oneway_options(origin, destination, date):
     url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
-    params = {"departure_date":date,
-              "sid":"iSiX639",
-              "origin_airport_code":origin,
-              "destination_airport_code":destination,
-              "adults":"1"}
+    params = {
+        "departure_date": date,
+        "sid": "iSiX639",
+        "origin_airport_code": origin,
+        "destination_airport_code": destination,
+        "adults": "1",
+        "number_of_itineraries": "10"
+    }
     res = requests.get(url, headers=Headers, params=params).json()
     itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
     options = []
     for itin in itineraries.values():
             airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-            if airline not in Airline_Whitelist:
-                continue
 
             details = itin["slice_data"]["slice_0"]
             dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
@@ -75,6 +77,7 @@ def get_oneway_options(origin, destination, date):
 def get_roundtrip(origin, destination, dep_date, ret_date):
     url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
     params = {
+        "number_of_itineraries": "10",
         "sid": "iSiX639",
         "origin_airport_code": f"{origin},{destination}",
         "adults": "1",
@@ -105,6 +108,8 @@ def valid_layover(leg1_options, leg2_options,hub):
                     "leg2": leg2
                 })
     if valid_pairs:
+        for pair in valid_pairs:
+            print(f"Valid layover found: {pair['leg1']['airline']} → {pair['leg2']['airline']} | Total: ${pair['price']}")
         return min(valid_pairs, key=lambda x: x["price"])
     else:
         return None
