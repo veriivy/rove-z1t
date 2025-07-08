@@ -108,8 +108,6 @@ def valid_layover(leg1_options, leg2_options,hub):
                     "leg2": leg2
                 })
     if valid_pairs:
-        for pair in valid_pairs:
-            print(f"Valid layover found: {pair['leg1']['airline']} → {pair['leg2']['airline']} | Total: ${pair['price']}")
         return min(valid_pairs, key=lambda x: x["price"])
     else:
         return None
