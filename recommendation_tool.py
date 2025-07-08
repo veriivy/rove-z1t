@@ -1,6 +1,6 @@
 from synthetic_routing import (
     get_roundtrip, one_way, get_oneway_options,
-    valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs
+    valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs, Airline_Whitelist, min_layover, Headers
 )
 from value_per_mile_file import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
 
