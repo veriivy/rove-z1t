@@ -5,14 +5,14 @@ from datetime import datetime, timedelta
 Origin = "IST"
 Destination = "JFK"
 Hubs = ["ATL","ORD","DFW"]
-Airline_Whitelist = {"TK"}
+Airline_Whitelist = {"AA","UA","DL",}
 min_layover = timedelta(minutes=75)
 
 Departure_Date = "2025-07-23"
 Return_Date = "2025-07-26"
 
 Headers = {
-    "x-rapidapi-key": "81a303ed3bmsh2517e839f327728p19d220jsn9b336344227d",
+    "x-rapidapi-key": "3b5fec51e4msh9d34ba033d40eadp147cd5jsnd946c5173328",
     "x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"
 }
 #direct one-way flight
@@ -31,7 +31,8 @@ def one_way(origin, destination, date):
     direct = []
     for itin in itineraries.values():
             airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-
+            if airline not in Airline_Whitelist:
+                continue
             details = itin["slice_data"]["slice_0"]
             dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
             arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
@@ -60,7 +61,8 @@ def get_oneway_options(origin, destination, date):
     options = []
     for itin in itineraries.values():
             airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-
+            if airline not in Airline_Whitelist:
+                continue
             details = itin["slice_data"]["slice_0"]
             dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
             arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
@@ -134,71 +136,4 @@ def print_direct_details(flight):
     print(f"Total Price: ${price}")
     print(f"Outbound: {out_airline} | Departs {out_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {out_arr.strftime('%a, %b %d at %#I:%M %p')}")
     print(f"Inbound: {ret_airline} | Departs {ret_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {ret_arr.strftime('%a, %b %d at %#I:%M %p')}")
-
-#get direct price
-direct_flight = get_roundtrip(Origin, Destination, Departure_Date, Return_Date)
-price = direct_flight["price_details"]["display_total_fare"]
-valid_out = []
-valid_in = []
-#find best synthetic prices
-for hub in Hubs:
-    if hub in [Origin, Destination]:
-        continue
-
-    leg1_options = get_oneway_options(Origin, hub, Departure_Date)
-    leg2_options = get_oneway_options(hub, Destination, Departure_Date)
-    current = valid_layover(leg1_options,leg2_options,hub)
-    if current:
-        valid_out.append(current)
-
-    leg3_options = get_oneway_options(Destination, hub, Return_Date)
-    leg4_options = get_oneway_options(hub,Origin, Return_Date)
-    current = valid_layover(leg3_options,leg4_options,hub)
-    if current:
-        valid_in.append(current)
-#compare
-total = price + 1
-if valid_out and valid_in:
-    best_out = min(valid_out, key=lambda x: x["price"])
-    cheap_out = best_out
-    direct_out = one_way(Origin, Destination, Departure_Date)[0]
-    if best_out['price'] > direct_out['price']:
-        cheap_out = direct_out
-    best_in = min(valid_in, key=lambda x: x["price"])
-    cheap_in = best_in
-    direct_in = one_way(Destination, Origin, Return_Date)[0]
-    if best_in['price']> direct_in['price']:
-        cheap_in = direct_in
-    total = cheap_in['price']+cheap_out['price']
-else:
-    print("No synthetic route available.")
-if total<price:
-    print("Synthetic saves you money")
-    print("\nBest outbound synthetic route:")
-    print(f"Through hub: {best_out['hub']} | Total: ${best_out['price']}")
-    print_leg_details(f"Leg 1 ({Origin} → {best_out['hub']})", best_out["leg1"])
-    print_leg_details(f"Leg 2 ({best_out['hub']} → {Destination})", best_out["leg2"])
-     
-    print("\nBest inbound synthetic route:")
-    print(f"Through hub: {best_in['hub']} | Total: ${best_in['price']}")
-    print_leg_details(f"Leg 1 ({Destination} → {best_in['hub']})", best_in["leg1"])
-    print_leg_details(f"Leg 2 ({best_in['hub']} → {Origin})", best_in["leg2"])
-elif total>price:
-    print("Direct is the best way")
-    print_direct_details(direct_flight)
-else:
-    print("Both methods cost the same")
-    print("Choose what you'd prefer")
-
-    print_direct_details(direct_flight)
-
-    print("\nBest outbound synthetic route:")
-    print(f"Through hub: {best_out['hub']} | Total: ${best_out['price']}")
-    print_leg_details(f"Leg 1 ({Origin} → {best_out['hub']})", best_out["leg1"])
-    print_leg_details(f"Leg 2 ({best_out['hub']} → {Destination})", best_out["leg2"])
-     
-    print("\nBest inbound synthetic route:")
-    print(f"Through hub: {best_in['hub']} | Total: ${best_in['price']}")
-    print_leg_details(f"Leg 1 ({Destination} → {best_in['hub']})", best_in["leg1"])
-    print_leg_details(f"Leg 2 ({best_in['hub']} → {Origin})", best_in["leg2"])
 

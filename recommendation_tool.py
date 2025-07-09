@@ -1,23 +1,33 @@
+from datetime import datetime, timedelta
 from Synthetic_Routing import (
     get_roundtrip, one_way, get_oneway_options,
     valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs, Airline_Whitelist, min_layover, Headers
 )
-from  import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
+from test import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
 
-def create_route_object(route_type, carrier, price, miles, class_code="Y"):
+def create_route_object(route_type, carrier, price, miles, class_code="Y", synthetic=False, legs=None, roundTrip = False):
     if route_type == "flight":
-        vpm = get_value_per_mile_airlines(carrier, class_code)
+        if synthetic:
+            vpms = []
+            for leg in legs:
+                vpms.append(get_value_per_mile_airlines(leg["airline"], class_code))
+            vpm = sum(vpms) / len(vpms)
+        else:
+            vpm = get_value_per_mile_airlines(carrier, class_code)
     elif route_type == "gift_card":
         vpm = value_per_mile_giftCards(carrier)
     elif route_type == "hotel":
         vpm = value_per_mile_hotels(carrier)
+
     return {
         "type": route_type,
         "airline": carrier,
-        "route": [route_type.upper()],
-        "total_distance": miles,
         "price": price,
-        "vpm": round(vpm, 2) if vpm else 0
+        "total_distance": miles,
+        "vpm": round(vpm, 2) if vpm else 0,
+        "synthetic": synthetic,
+        "roundtrip": roundTrip,
+        "legs": legs
     }
 
 def recommend_routes(routes, priority):
@@ -35,17 +45,46 @@ def recommend_routes(routes, priority):
     return sorted(routes, key=key, reverse=reverse)[:3]
 
 def gather_all_routes():
-    flight_routes = []
-    direct_flight = get_roundtrip(Origin, Destination, Departure_Date, Return_Date)
-    direct_price = float(direct_flight["price_details"]["display_total_fare"])
+    flight_routes_out = []
+    flight_routes_in = []
+    roundtrip_data = get_roundtrip(Origin, Destination, Departure_Date, Return_Date)
+    if roundtrip_data:
+        slices = roundtrip_data["slice_data"]
+        out = slices.get("slice_0")
+        inn = slices.get("slice_1")
+        out_price = float(roundtrip_data["price_details"]["display_total_fare"]) / 2  # estimate half price
+        out_airline = out["airline"]["code"]
+        out_dep = datetime.fromisoformat(out["departure"]["datetime"]["date_time"])
+        out_arr = datetime.fromisoformat(out["arrival"]["datetime"]["date_time"])
+        flight_routes_out.append(create_route_object(
+                "flight", out["airline"]["code"], float(roundtrip_data["price_details"]["display_total_fare"]), 2200,
+                legs=[{
+                    "airline": out_airline,
+                    "price": out_price,
+                    "departure": out_dep,
+                    "arrival": out_arr,
+                    "origin": out["departure"]["airport"]["code"],
+                    "destination": out["arrival"]["airport"]["code"]
+                }],
+                roundTrip=True
+            ))
 
-    try:
-        direct_out = one_way(Origin, Destination, Departure_Date)[0]
-        direct_in = one_way(Destination, Origin, Return_Date)[0]
-        flight_routes.append(create_route_object("flight", direct_out["airline"], direct_out["price"], 2200))
-        flight_routes.append(create_route_object("flight", direct_in["airline"], direct_in["price"], 2200))
-    except:
-        pass
+        in_price = float(roundtrip_data["price_details"]["display_total_fare"]) / 2
+        in_airline = inn["airline"]["code"]
+        in_dep = datetime.fromisoformat(inn["departure"]["datetime"]["date_time"])
+        in_arr = datetime.fromisoformat(inn["arrival"]["datetime"]["date_time"])
+        flight_routes_in.append(create_route_object(
+                "flight", inn["airline"]["code"], float(roundtrip_data["price_details"]["display_total_fare"]), 2200,
+                legs=[{
+                    "airline": in_airline,
+                    "price": in_price,
+                    "departure": in_dep,
+                    "arrival": in_arr,
+                    "origin": inn["departure"]["airport"]["code"],
+                    "destination": inn["arrival"]["airport"]["code"]
+                }],
+                roundTrip=True
+            ))
 
     valid_out = []
     valid_in = []
@@ -63,13 +102,27 @@ def gather_all_routes():
         if inn:
             valid_in.append(inn)
 
-    if valid_out and valid_in:
+    if valid_out:
         best_out = min(valid_out, key=lambda x: x["price"])
+        total_price = best_out["price"]
+        legs = [
+            {**best_out["leg1"], "origin": Origin, "destination": best_out["hub"]},
+            {**best_out["leg2"], "origin": best_out["hub"], "destination": Destination}
+        ]
+        flight_routes_out.append(
+            create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
+        )
+    if valid_in:
         best_in = min(valid_in, key=lambda x: x["price"])
-        flight_routes.append(create_route_object("flight", best_out["leg1"]["airline"], best_out["leg1"]["price"], 1100))
-        flight_routes.append(create_route_object("flight", best_out["leg2"]["airline"], best_out["leg2"]["price"], 1100))
-        flight_routes.append(create_route_object("flight", best_in["leg1"]["airline"], best_in["leg1"]["price"], 1100))
-        flight_routes.append(create_route_object("flight", best_in["leg2"]["airline"], best_in["leg2"]["price"], 1100))
+        total_price = best_in["price"]
+        legs = [
+            {**best_in["leg1"], "origin": Destination, "destination": best_in["hub"]},
+            {**best_in["leg2"], "origin": best_in["hub"], "destination": Origin}
+        ]
+        flight_routes_in.append(
+            create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
+        )
+
 
     gift_card_routes = [
         create_route_object("gift_card", "DL", 100, 300),
@@ -81,16 +134,35 @@ def gather_all_routes():
         create_route_object("hotel", "DL", 160, 400)
     ]
 
-    return flight_routes + gift_card_routes + hotel_routes
+    return flight_routes_out,flight_routes_in, gift_card_routes + hotel_routes
 
-def display_recommendations(routes, priority):
-    print(f"\nTop 3 redemption options by '{priority}':\n")
+def display_recommendations(routes, priority, direction):
+    print(f"\nTop 3 {direction} redemption options by '{priority}':\n")
     for i, route in enumerate(routes, 1):
+        label = "SYN" if route.get("synthetic") else ("RT" if route.get("roundtrip") else "DIR")
+        print(f"{i}. {label} {route['type'].upper()} | {route['airline']} | "
+              f"Price: ${route['price']} | Distance: {route['total_distance']} mi | "
+              f"VPM: {route['vpm']}¢/mile")
+        if route.get("legs"):
+            for j, leg in enumerate(route["legs"], 1):
+                dep = leg["departure"] if isinstance(leg["departure"], str) else leg["departure"].strftime("%a %b %d, %I:%M %p")
+                arr = leg["arrival"] if isinstance(leg["arrival"], str) else leg["arrival"].strftime("%a %b %d, %I:%M %p")
+                print(f"   Leg {j}: {leg['airline']} | ${leg['price']} | {leg['origin']} → {leg['destination']} | {dep} → {arr}")
+
+def display_misc_routes(routes, priority):
+    print(f"\nOther redemption options by {priority}:\n")
+    sorted_routes = recommend_routes(routes, priority)
+    for i, route in enumerate(sorted_routes, 1):
         print(f"{i}. {route['type'].upper()} | {route['airline']} | "
               f"Price: ${route['price']} | Distance: {route['total_distance']} mi | "
               f"VPM: {route['vpm']}¢/mile")
 
+
+# Run example
 priority = "value_per_mile"
-all_routes = gather_all_routes()
-top_choices = recommend_routes(all_routes, priority)
-display_recommendations(top_choices, priority)
+all_routes_out, all_routes_in, misc_routes = gather_all_routes()
+top_out = recommend_routes(all_routes_out, priority)
+top_in = recommend_routes(all_routes_in, priority)
+display_recommendations(top_out, priority, direction="outbound")
+display_recommendations(top_in, priority, direction="inbound")
+display_misc_routes(misc_routes, priority)

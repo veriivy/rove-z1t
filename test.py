@@ -1,169 +1,69 @@
-import requests
-from datetime import datetime, timedelta
+#airline value per mile valuations
+#codes for American Airlines
+economyCodes = ["Y", "H", "K", "M", "L", "V", "G", "S", "N", "Q", "O", "B"]
+premiumEconomyCodes = ["W", "P"]
+businessAndFirstClassCodes = ["F", "J"]
 
-#set-up
-Origin = "MIA"
-Destination = "JFK"
-Hubs = ["ATL", "CLT", "ORD", "DFW", "BOS", "PHL"]
-Airline_Whitelist = {"F9"}
-min_layover = timedelta(minutes=75)
+#codes for United Airlines
+uEconomyCodes = ["Y", "H", "K", "M", "L", "V", "G", "S", "N", "Q", "B", "E", "U", "W", "T"]
+uPremiumEconomyCodes = ["O", "A", "R"]
+uBusinessAndFirstClassCodes=["J", "C", "D", "Z", "P"]
 
-Departure_Date = "2025-07-23"
-Return_Date = "2025-07-26"
+#codes for Delta Airlines
 
-Headers = {
-    "x-rapidapi-key": "4b5cfb9794msha65a207bf711a16p12910cjsn642f80d40472",
-    "x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"
-}
+dEconomyCodes = ["H", "W", "K", "L", "E"]
+dBusinessClassCodes = ["Y", "B", "M", "W", "S"]
+dPremiumBusinessCodes = ["P", "A", "G"]
+dFirstClassCodes = ["J", "C", "D", "I", "Z"]
 
-#one-way
-def get_oneway_options(origin, destination, date):
-    url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
-    params = {"departure_date":date,
-              "sid":"iSiX639",
-              "origin_airport_code":origin,
-              "destination_airport_code":destination,
-              "adults":"1"}
-    res = requests.get(url, headers=Headers, params=params).json()
-    itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
-    options = []
-    for itin in itineraries.values():
-            airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-            if airline not in Airline_Whitelist:
-                continue
+def get_value_per_mile_airlines(airline, classType):
+    #American Airlines
+    if (airline == "AA"):
+        if (classType in economyCodes):
+            return 1.6
+        elif (classType in premiumEconomyCodes):
+            return 1.92
+        elif(classType in businessAndFirstClassCodes):
+            return 3.3
 
-            details = itin["slice_data"]["slice_0"]
-            dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
-            arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
-            fare = float(itin["price_details"]["display_total_fare"])
-            options.append({
-                "airline": airline,
-                "price": fare,
-                "departure": dep,
-                "arrival": arr
-            })
-    return options
-
-#round-trip
-def get_roundtrip(origin, destination, dep_date, ret_date):
-    url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
-    params = {
-        "sid": "iSiX639",
-        "origin_airport_code": f"{origin},{destination}",
-        "adults": "1",
-        "departure_date": f"{dep_date},{ret_date}",
-        "destination_airport_code": f"{destination},{origin}"
-        
-    }
-
-    try:
-        res = requests.get(url, headers=Headers, params=params).json()
-        itineraries = res["getAirFlightRoundTrip"]["results"]["result"]["itinerary_data"]
-        for itin in itineraries.values():
-            slices = itin["slice_data"]
-            out_airline = slices["slice_0"]["airline"]["code"]
-            ret_airline = slices["slice_1"]["airline"]["code"]
-            if out_airline in Airline_Whitelist or ret_airline in Airline_Whitelist:
-                return itin
-    except:
-        return None
-#make sure people have enough time between connecting flights
-def valid_layover(leg1_options, leg2_options,hub):
-    valid_pairs = []
-    for leg1 in leg1_options:
-        for leg2 in leg2_options:
-            if leg2["departure"] > leg1["arrival"] + min_layover:
-                total_price = leg1["price"] + leg2["price"]
-                valid_pairs.append({
-                    "hub": hub,
-                    "price": total_price,
-                    "leg1": leg1,
-                    "leg2": leg2
-                })
-    if valid_pairs:
-        return min(valid_pairs, key=lambda x: x["price"])
-    else:
-        return None
+    #United Airlines    
+    if (airline == "UA"):
+            if (classType in uEconomyCodes):
+                return 1.09
+            elif (classType in uPremiumEconomyCodes):
+                return 1.32
+            elif(classType in uBusinessAndFirstClassCodes):
+                return 1.46
     
-def print_leg_details(label, leg):
-    dep_time = leg["departure"].strftime("%a, %b %d at %#I:%M %p")
-    arr_time = leg["arrival"].strftime("%a, %b %d at %#I:%M %p")
-    print(f"{label}: {leg['airline']} | ${leg['price']} | Departs {dep_time} → Arrives {arr_time}")
+    #Delta Airlines
+    if (airline == "DL"):
+            if (classType in dEconomyCodes):
+                return 1.12
+            elif(classType in dBusinessClassCodes):
+                return 1.24
+            elif (classType in dPremiumBusinessCodes):
+                 return 1.22
+            elif (classType in dFirstClassCodes):
+                 return 1.10
+    
 
-def print_direct_details(flight):
-    price = flight["price_details"]["display_total_fare"]
-    out_slice = flight["slice_data"]["slice_0"]
-    ret_slice = flight["slice_data"]["slice_1"]
 
-    out_dep = datetime.fromisoformat(out_slice["departure"]["datetime"]["date_time"])
-    out_arr = datetime.fromisoformat(out_slice["arrival"]["datetime"]["date_time"])
-    ret_dep = datetime.fromisoformat(ret_slice["departure"]["datetime"]["date_time"])
-    ret_arr = datetime.fromisoformat(ret_slice["arrival"]["datetime"]["date_time"])
+def value_per_mile_giftCards(giftCardType):
+    if (giftCardType == "DL"):
+         return 0.7
+    if (giftCardType == "UA"):
+         return 1.2
+ 
+    
 
-    out_airline = out_slice["airline"]["code"]
-    ret_airline = ret_slice["airline"]["code"]
 
-    print("\nDirect roundtrip flight details:")
-    print(f"Total Price: ${price}")
-    print(f"Outbound: {out_airline} | Departs {out_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {out_arr.strftime('%a, %b %d at %#I:%M %p')}")
-    print(f"Inbound: {ret_airline} | Departs {ret_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {ret_arr.strftime('%a, %b %d at %#I:%M %p')}")
 
-#get direct price
-direct_flight = get_roundtrip(Origin, Destination, Departure_Date, Return_Date)
-price = direct_flight["price_details"]["display_total_fare"]
-valid_out = []
-valid_in = []
-#find best synthetic prices
-for hub in Hubs:
-    if hub in [Origin, Destination]:
-        continue
 
-    leg1_options = get_oneway_options(Origin, hub, Departure_Date)
-    leg2_options = get_oneway_options(hub, Destination, Departure_Date)
-    current = valid_layover(leg1_options,leg2_options,hub)
-    if current:
-        valid_out.append(current)
-
-    leg3_options = get_oneway_options(Destination, hub, Return_Date)
-    leg4_options = get_oneway_options(hub,Origin, Return_Date)
-    current = valid_layover(leg3_options,leg4_options,hub)
-    if current:
-        valid_in.append(current)
-#compare
-total = price + 1
-if valid_out and valid_in:
-    best_out = min(valid_out, key=lambda x: x["price"])
-    best_in = min(valid_in, key=lambda x: x["price"])
-    total = best_in["price"]+best_out["price"]
-else:
-    print("No synthetic route available.")
-if total<price:
-    print("Synthetic saves you money")
-    print("\nBest outbound synthetic route:")
-    print(f"Through hub: {best_out['hub']} | Total: ${best_out['price']}")
-    print_leg_details(f"Leg 1 ({Origin} → {best_out['hub']})", best_out["leg1"])
-    print_leg_details(f"Leg 2 ({best_out['hub']} → {Destination})", best_out["leg2"])
-     
-    print("\nBest inbound synthetic route:")
-    print(f"Through hub: {best_in['hub']} | Total: ${best_in['price']}")
-    print_leg_details(f"Leg 1 ({Destination} → {best_in['hub']})", best_in["leg1"])
-    print_leg_details(f"Leg 2 ({best_in['hub']} → {Origin})", best_in["leg2"])
-elif total>price:
-    print("Direct is the best way")
-    print_direct_details(direct_flight)
-else:
-    print("Both methods cost the same")
-    print("Choose what you'd prefer")
-
-    print_direct_details(direct_flight)
-
-    print("\nBest outbound synthetic route:")
-    print(f"Through hub: {best_out['hub']} | Total: ${best_out['price']}")
-    print_leg_details(f"Leg 1 ({Origin} → {best_out['hub']})", best_out["leg1"])
-    print_leg_details(f"Leg 2 ({best_out['hub']} → {Destination})", best_out["leg2"])
-     
-    print("\nBest inbound synthetic route:")
-    print(f"Through hub: {best_in['hub']} | Total: ${best_in['price']}")
-    print_leg_details(f"Leg 1 ({Destination} → {best_in['hub']})", best_in["leg1"])
-    print_leg_details(f"Leg 2 ({best_in['hub']} → {Origin})", best_in["leg2"])
-
+def value_per_mile_hotels(airlineType):
+     #converting to Marriot Bonvoy
+     if (airlineType == "AA"):
+          return 0.3
+     if (airlineType == "UA"):
+          return 1
+     if (airlineType == "DL"):
+          return 2.5
