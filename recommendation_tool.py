@@ -2,13 +2,8 @@ from Synthetic_Routing import (
     get_roundtrip, one_way, get_oneway_options,
     valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs, Airline_Whitelist, min_layover, Headers
 )
-from VPM import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
-# Typical Python naming conventions:
-# - Modules and files: lowercase_with_underscores (e.g., value_per_mile.py)
-# - Functions: lowercase_with_underscores (e.g., get_value_per_mile_airlines)
-# - Variables: lowercase_with_underscores (e.g., total_distance)
-# - Classes: CapitalizedWords (e.g., ValuePerMile)
-# - Constants: ALL_UPPERCASE_WITH_UNDERSCORES (e.g., ORIGIN)
+from  import get_value_per_mile_airlines, value_per_mile_giftCards, value_per_mile_hotels
+
 def create_route_object(route_type, carrier, price, miles, class_code="Y"):
     if route_type == "flight":
         vpm = get_value_per_mile_airlines(carrier, class_code)
