@@ -22,7 +22,7 @@ def create_route_object(route_type, carrier, price, miles, class_code="Y", synth
     return {
         "type": route_type,
         "airline": carrier,
-        "price": price,
+        "price": round(price, 2),
         "total_distance": miles,
         "vpm": round(vpm, 2) if vpm else 0,
         "synthetic": synthetic,
