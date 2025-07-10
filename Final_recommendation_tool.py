@@ -52,7 +52,7 @@ def gather_all_routes():
         slices = roundtrip_data["slice_data"]
         out = slices.get("slice_0")
         inn = slices.get("slice_1")
-        out_price = float(roundtrip_data["price_details"]["display_total_fare"]) / 2  # estimate half price
+        out_price = round(float(roundtrip_data["price_details"]["display_total_fare"]) / 2, 2)
         out_airline = out["airline"]["code"]
         out_dep = datetime.fromisoformat(out["departure"]["datetime"]["date_time"])
         out_arr = datetime.fromisoformat(out["arrival"]["datetime"]["date_time"])
@@ -69,7 +69,7 @@ def gather_all_routes():
                 roundTrip=True
             ))
 
-        in_price = float(roundtrip_data["price_details"]["display_total_fare"]) / 2
+        in_price = round(float(roundtrip_data["price_details"]["display_total_fare"]) / 2, 2)
         in_airline = inn["airline"]["code"]
         in_dep = datetime.fromisoformat(inn["departure"]["datetime"]["date_time"])
         in_arr = datetime.fromisoformat(inn["arrival"]["datetime"]["date_time"])
