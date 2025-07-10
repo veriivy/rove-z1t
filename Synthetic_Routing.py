@@ -136,4 +136,3 @@ def print_direct_details(flight):
     print(f"Total Price: ${price}")
     print(f"Outbound: {out_airline} | Departs {out_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {out_arr.strftime('%a, %b %d at %#I:%M %p')}")
     print(f"Inbound: {ret_airline} | Departs {ret_dep.strftime('%a, %b %d at %#I:%M %p')} → Arrives {ret_arr.strftime('%a, %b %d at %#I:%M %p')}")
-

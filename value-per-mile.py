@@ -53,6 +53,10 @@ def value_per_mile_giftCards(giftCardType):
          return 0.7
     if (giftCardType == "UA"):
          return 1.2
+ 
+    
+
+
 
 
 def value_per_mile_hotels(airlineType):
