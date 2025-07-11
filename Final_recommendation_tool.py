@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from Final_Synthetic_Routing import (
+from final_synthetic_routing import (
     get_roundtrip, one_way, get_oneway_options,
     valid_layover, Origin, Destination, Departure_Date, Return_Date, Hubs, Airline_Whitelist, min_layover, Headers
 )
@@ -47,6 +47,7 @@ def recommend_routes(routes, priority):
 def gather_all_routes():
     flight_routes_out = []
     flight_routes_in = []
+    
     roundtrip_data = get_roundtrip(Origin, Destination, Departure_Date, Return_Date)
     if roundtrip_data:
         slices = roundtrip_data["slice_data"]
@@ -123,7 +124,6 @@ def gather_all_routes():
             create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
         )
 
-
     gift_card_routes = [
         create_route_object("gift_card", "DL", 100, 300),
         create_route_object("gift_card", "UA", 120, 300)
@@ -158,11 +158,15 @@ def display_misc_routes(routes, priority):
               f"VPM: {route['vpm']}¢/mile")
 
 
-# Run example
-priority = "value_per_mile"
-all_routes_out, all_routes_in, misc_routes = gather_all_routes()
-top_out = recommend_routes(all_routes_out, priority)
-top_in = recommend_routes(all_routes_in, priority)
-display_recommendations(top_out, priority, direction="outbound")
-display_recommendations(top_in, priority, direction="inbound")
-display_misc_routes(misc_routes, priority)
+# Run example only if this module is run directly
+if __name__ == "__main__":
+    try:
+        priority = "value_per_mile"
+        all_routes_out, all_routes_in, misc_routes = gather_all_routes()
+        top_out = recommend_routes(all_routes_out, priority)
+        top_in = recommend_routes(all_routes_in, priority)
+        display_recommendations(top_out, priority, direction="outbound")
+        display_recommendations(top_in, priority, direction="inbound")
+        display_misc_routes(misc_routes, priority)
+    except Exception as e:
+        print(f"Error running example: {e}")

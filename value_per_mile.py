@@ -54,10 +54,6 @@ def value_per_mile_giftCards(giftCardType):
     if (giftCardType == "UA"):
          return 1.2
  
-    
-
-
-
 
 def value_per_mile_hotels(airlineType):
      #converting to Marriot Bonvoy

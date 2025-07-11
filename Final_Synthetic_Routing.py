@@ -12,90 +12,127 @@ Departure_Date = "2025-07-23"
 Return_Date = "2025-07-26"
 
 Headers = {
-    "x-rapidapi-key": "3b5fec51e4msh9d34ba033d40eadp147cd5jsnd946c5173328",
+    "x-rapidapi-key": "af7df56d80msh53e556cad1a285bp149b79jsn9d83ff4400b1",
     "x-rapidapi-host": "priceline-com-provider.p.rapidapi.com"
 }
+
 #direct one-way flight
 def one_way(origin, destination, date):
-    url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
-    params = {
-        "departure_date": date,
-        "sid": "iSiX639",
-        "origin_airport_code": origin,
-        "destination_airport_code": destination,
-        "adults": "1",
-        "number_of_itineraries": "10"
-    }
-    res = requests.get(url, headers=Headers, params=params).json()
-    itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
-    direct = []
-    for itin in itineraries.values():
-            airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-            if airline not in Airline_Whitelist:
-                continue
-            details = itin["slice_data"]["slice_0"]
-            dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
-            arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
-            fare = float(itin["price_details"]["display_total_fare"])
-            direct.append({
-                "airline": airline,
-                "price": fare,
-                "departure": dep,
-                "arrival": arr
-            })
-            break
-    return direct
+    try:
+        url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
+        params = {
+            "departure_date": date,
+            "sid": "iSiX639",
+            "origin_airport_code": origin,
+            "destination_airport_code": destination,
+            "adults": "1",
+            "number_of_itineraries": "10"
+        }
+        res = requests.get(url, headers=Headers, params=params).json()
+        
+        # Debug: Print the actual response structure
+        print(f"API Response keys: {list(res.keys())}")
+        if "getAirFlightDepartures" not in res:
+            print(f"Available keys: {list(res.keys())}")
+            return []
+            
+        itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
+        direct = []
+        for itin in itineraries.values():
+                airline = itin["slice_data"]["slice_0"]["airline"]["code"]
+                if airline not in Airline_Whitelist:
+                    continue
+                details = itin["slice_data"]["slice_0"]
+                dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
+                arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
+                fare = float(itin["price_details"]["display_total_fare"])
+                direct.append({
+                    "airline": airline,
+                    "price": fare,
+                    "departure": dep,
+                    "arrival": arr
+                })
+                break
+        return direct
+    except Exception as e:
+        print(f"Error in one_way: {e}")
+        return []
+
 #all possible one-way flights
 def get_oneway_options(origin, destination, date):
-    url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
-    params = {
-        "departure_date": date,
-        "sid": "iSiX639",
-        "origin_airport_code": origin,
-        "destination_airport_code": destination,
-        "adults": "1",
-        "number_of_itineraries": "10"
-    }
-    res = requests.get(url, headers=Headers, params=params).json()
-    itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
-    options = []
-    for itin in itineraries.values():
-            airline = itin["slice_data"]["slice_0"]["airline"]["code"]
-            if airline not in Airline_Whitelist:
-                continue
-            details = itin["slice_data"]["slice_0"]
-            dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
-            arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
-            fare = float(itin["price_details"]["display_total_fare"])
-            options.append({
-                "airline": airline,
-                "price": fare,
-                "departure": dep,
-                "arrival": arr
-            })
-    return options
+    try:
+        url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/departures"
+        params = {
+            "departure_date": date,
+            "sid": "iSiX639",
+            "origin_airport_code": origin,
+            "destination_airport_code": destination,
+            "adults": "1",
+            "number_of_itineraries": "10"
+        }
+        res = requests.get(url, headers=Headers, params=params).json()
+        
+        # Debug: Print the actual response structure
+        print(f"get_oneway_options API Response keys: {list(res.keys())}")
+        if "getAirFlightDepartures" not in res:
+            print(f"Available keys: {list(res.keys())}")
+            return []
+            
+        itineraries = res["getAirFlightDepartures"]["results"]["result"]["itinerary_data"]
+        options = []
+        for itin in itineraries.values():
+                airline = itin["slice_data"]["slice_0"]["airline"]["code"]
+                if airline not in Airline_Whitelist:
+                    continue
+                details = itin["slice_data"]["slice_0"]
+                dep = datetime.fromisoformat(details["departure"]["datetime"]["date_time"])
+                arr = datetime.fromisoformat(details["arrival"]["datetime"]["date_time"])
+                fare = float(itin["price_details"]["display_total_fare"])
+                options.append({
+                    "airline": airline,
+                    "price": fare,
+                    "departure": dep,
+                    "arrival": arr
+                })
+        return options
+    except Exception as e:
+        print(f"Error in get_oneway_options: {e}")
+        return []
 
 #round-trip
 def get_roundtrip(origin, destination, dep_date, ret_date):
-    url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
-    params = {
-        "number_of_itineraries": "10",
-        "sid": "iSiX639",
-        "origin_airport_code": f"{origin},{destination}",
-        "adults": "1",
-        "departure_date": f"{dep_date},{ret_date}",
-        "destination_airport_code": f"{destination},{origin}"
-        
-    }
+    try:
+        url = "https://priceline-com-provider.p.rapidapi.com/v2/flight/roundTrip"
+        params = {
+            "number_of_itineraries": "10",
+            "sid": "iSiX639",
+            "origin_airport_code": f"{origin},{destination}",
+            "adults": "1",
+            "departure_date": f"{dep_date},{ret_date}",
+            "destination_airport_code": f"{destination},{origin}"
+            
+        }
 
-    res = requests.get(url, headers=Headers, params=params).json()
-    itineraries = res["getAirFlightRoundTrip"]["results"]["result"]["itinerary_data"]
-    for itin in itineraries.values():
-            slices = itin["slice_data"]
-            out_airline = slices["slice_0"]["airline"]["code"]
-            ret_airline = slices["slice_1"]["airline"]["code"]
-            if out_airline in Airline_Whitelist or ret_airline in Airline_Whitelist:
-                return itin
+        res = requests.get(url, headers=Headers, params=params).json()
+        
+        # Debug: Print the actual response structure
+        print(f"get_roundtrip API Response keys: {list(res.keys())}")
+        if "getAirFlightRoundTrip" not in res:
+            print(f"Available keys: {list(res.keys())}")
+            return None
+            
+        itineraries = res["getAirFlightRoundTrip"]["results"]["result"]["itinerary_data"]
+        for itin in itineraries.values():
+                slices = itin["slice_data"]
+                out_airline = slices["slice_0"]["airline"]["code"]
+                ret_airline = slices["slice_1"]["airline"]["code"]
+                if out_airline in Airline_Whitelist or ret_airline in Airline_Whitelist:
+                    return itin
+        return None
+    except Exception as e:
+        print(f"Error in get_roundtrip: {e}")
+        return None
+
 #make sure people have enough time between connecting flights
 def valid_layover(leg1_options, leg2_options,hub):
     valid_pairs = []
