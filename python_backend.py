@@ -141,7 +141,7 @@ def get_recommendations():
         
         # Process outbound flights
         if outbound:
-            for i, flight in enumerate(outbound[:3]):
+            for i, flight in enumerate(outbound[:5]):
                 if isinstance(flight, dict):
                     # Handle dictionary format (real data)
                     flight_data = {
@@ -193,7 +193,7 @@ def get_recommendations():
         
         # Process inbound flights
         if inbound:
-            for i, flight in enumerate(inbound[:3]):
+            for i, flight in enumerate(inbound[:5]):
                 if isinstance(flight, dict):
                     # Handle dictionary format (real data)
                     flight_data = {
@@ -245,7 +245,7 @@ def get_recommendations():
         
         # Process misc options
         if misc:
-            for i, option in enumerate(misc[:3]):
+            for i, option in enumerate(misc[:5]):
                 if isinstance(option, dict):
                     # Handle dictionary format (real data)
                     option_data = {

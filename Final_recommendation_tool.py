@@ -42,7 +42,7 @@ def recommend_routes(routes, priority):
     elif priority == "price":
         key = lambda r: r["price"]
         reverse = False
-    return sorted(routes, key=key, reverse=reverse)[:3]
+    return sorted(routes, key=key, reverse=reverse)[:5]
 
 def gather_all_routes():
     flight_routes_out = []
@@ -104,25 +104,29 @@ def gather_all_routes():
             valid_in.append(inn)
 
     if valid_out:
-        best_out = min(valid_out, key=lambda x: x["price"])
-        total_price = best_out["price"]
-        legs = [
-            {**best_out["leg1"], "origin": Origin, "destination": best_out["hub"]},
-            {**best_out["leg2"], "origin": best_out["hub"], "destination": Destination}
-        ]
-        flight_routes_out.append(
-            create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
-        )
+        # Add multiple outbound synthetic routes (up to 3 best options)
+        sorted_valid_out = sorted(valid_out, key=lambda x: x["price"])[:3]
+        for best_out in sorted_valid_out:
+            total_price = best_out["price"]
+            legs = [
+                {**best_out["leg1"], "origin": Origin, "destination": best_out["hub"]},
+                {**best_out["leg2"], "origin": best_out["hub"], "destination": Destination}
+            ]
+            flight_routes_out.append(
+                create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
+            )
     if valid_in:
-        best_in = min(valid_in, key=lambda x: x["price"])
-        total_price = best_in["price"]
-        legs = [
-            {**best_in["leg1"], "origin": Destination, "destination": best_in["hub"]},
-            {**best_in["leg2"], "origin": best_in["hub"], "destination": Origin}
-        ]
-        flight_routes_in.append(
-            create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
-        )
+        # Add multiple inbound synthetic routes (up to 3 best options)
+        sorted_valid_in = sorted(valid_in, key=lambda x: x["price"])[:3]
+        for best_in in sorted_valid_in:
+            total_price = best_in["price"]
+            legs = [
+                {**best_in["leg1"], "origin": Destination, "destination": best_in["hub"]},
+                {**best_in["leg2"], "origin": best_in["hub"], "destination": Origin}
+            ]
+            flight_routes_in.append(
+                create_route_object("flight", "MULTI", total_price, 1100, synthetic=True, legs=legs)
+            )
 
     gift_card_routes = [
         create_route_object("gift_card", "DL", 100, 300),
@@ -137,7 +141,7 @@ def gather_all_routes():
     return flight_routes_out,flight_routes_in, gift_card_routes + hotel_routes
 
 def display_recommendations(routes, priority, direction):
-    print(f"\nTop 3 {direction} redemption options by '{priority}':\n")
+    print(f"\nTop {len(routes)} {direction} redemption options by '{priority}':\n")
     for i, route in enumerate(routes, 1):
         label = "SYN" if route.get("synthetic") else ("RT" if route.get("roundtrip") else "DIR")
         print(f"{i}. {label} {route['type'].upper()} | {route['airline']} | "
